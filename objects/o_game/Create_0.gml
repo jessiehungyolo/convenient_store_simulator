@@ -19,3 +19,14 @@ with (p2) {
     min_x_bound = other.mid_x + 2;
     max_x_bound = room_width - 2;
 }
+
+
+// 污漬生成節奏
+stain_interval = room_speed * 10; // 每 5 秒
+alarm[1] = stain_interval;
+
+// 污漬上限，避免太多
+max_stains = 6;
+
+// 生成層（請確保房間有這個 Instance Layer）
+layer_instances = "Instances";
