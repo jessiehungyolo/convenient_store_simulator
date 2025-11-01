@@ -37,6 +37,8 @@
   "resources":[
     {"id":{"name":"o_coffee_machine","path":"objects/o_coffee_machine/o_coffee_machine.yy",},},
     {"id":{"name":"o_coffee","path":"objects/o_coffee/o_coffee.yy",},},
+    {"id":{"name":"o_customer_manager","path":"objects/o_customer_manager/o_customer_manager.yy",},},
+    {"id":{"name":"o_customer","path":"objects/o_customer/o_customer.yy",},},
     {"id":{"name":"o_game","path":"objects/o_game/o_game.yy",},},
     {"id":{"name":"o_player","path":"objects/o_player/o_player.yy",},},
     {"id":{"name":"o_register","path":"objects/o_register/o_register.yy",},},
@@ -44,6 +46,7 @@
     {"id":{"name":"rm_room1","path":"rooms/rm_room1/rm_room1.yy",},},
     {"id":{"name":"spr_coffee_machine","path":"sprites/spr_coffee_machine/spr_coffee_machine.yy",},},
     {"id":{"name":"spr_coffee","path":"sprites/spr_coffee/spr_coffee.yy",},},
+    {"id":{"name":"spr_customer","path":"sprites/spr_customer/spr_customer.yy",},},
     {"id":{"name":"spr_player1","path":"sprites/spr_player1/spr_player1.yy",},},
     {"id":{"name":"spr_player2","path":"sprites/spr_player2/spr_player2.yy",},},
     {"id":{"name":"spr_register","path":"sprites/spr_register/spr_register.yy",},},
