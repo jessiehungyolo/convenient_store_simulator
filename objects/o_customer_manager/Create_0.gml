@@ -38,32 +38,37 @@ function pop_head_and_refresh() {
 // 嘗試把隊首派發到任一空檔的收銀機（不忙、服務點未被占用）
 function try_dispatch_head_to_free_register() {
     if (array_length(queue) <= 0) return;
-
     var head = queue[0];
-    if (!instance_exists(head)) return;
-    if (head.state != "queue") return;
+    if (!instance_exists(head) || head.state != "queue") return;
 
-    // 找出可用收銀機（不 busy & 不 slot_taken）
-    var free_lanes = [];
+    // 找出空的收銀台（不 busy 且不 slot_taken）
+    var free = [];
     for (var i = 0; i < array_length(regs); i++) {
         var r = regs[i];
         if (instance_exists(r) && !r.busy && !r.slot_taken) {
-            array_push(free_lanes, r.lane_id);
+            array_push(free, r.lane_id);
         }
     }
+    if (array_length(free) == 0) return;
 
-    if (array_length(free_lanes) > 0) {
-        var chosen_lane = choose(free_lanes[0], (array_length(free_lanes) > 1 ? free_lanes[1] : free_lanes[0]));
-        var fp = front_pos[chosen_lane];
-
-        head.assigned_lane = chosen_lane;
-        head.state    = "to_register";
-        head.target_x = fp.x;
-        head.target_y = fp.y;
-
-        var rr = get_register_by_lane(chosen_lane);
-        if (instance_exists(rr)) rr.slot_taken = true;
+    var chosen_lane = -1;
+    if (array_length(free) == 2) {
+        // 兩邊都空 → 用交替
+        chosen_lane = next_lane;
+        next_lane = 1 - next_lane;
+    } else {
+        // 只有一邊空
+        chosen_lane = free[0];
     }
+
+    var fp = front_pos[chosen_lane];
+    head.assigned_lane = chosen_lane;
+    head.state    = "to_register";
+    head.target_x = fp.x;
+    head.target_y = fp.y;
+
+    var rr = get_register_by_lane(chosen_lane);
+    if (instance_exists(rr)) rr.slot_taken = true;
 }
 
 // 依 lane_id 取得收銀機實例
@@ -76,39 +81,22 @@ function get_register_by_lane(lane_id) {
 
 // 生成一位新客人：若有空服務點→隨機派去左/右；否則加入中央隊伍尾端
 function spawn_one_customer() {
+    if (!is_array(queue)) queue = [];
     if (spawned_count >= max_customers) return;
 
     var c = instance_create_layer(door_x, door_y, instance_layer_name, o_customer);
-    c.door_x = door_x; c.door_y = door_y; // 只是存參考，離場用不到
-
+    c.door_x = door_x; c.door_y = door_y;
     spawned_count++;
 
-    // 蒐集空服務點
-    var free_lanes = [];
-    for (var i = 0; i < array_length(regs); i++) {
-        var r = regs[i];
-        if (instance_exists(r) && !r.busy && !r.slot_taken) {
-            array_push(free_lanes, r.lane_id);
-        }
-    }
+    array_push(queue, c);      // ✅ 一律進尾端
+    refresh_queue_targets();   // 重新排列（倒Y：由下往上）
+}
 
-    if (array_length(free_lanes) > 0) {
-        // 入口剛進來：有空就「隨機」派去左或右其中一個空機
-        var chosen_lane = free_lanes[irandom(array_length(free_lanes)-1)];
-        var fp = front_pos[chosen_lane];
 
-        c.assigned_lane = chosen_lane;
-        c.state    = "to_register";
-        c.target_x = fp.x;
-        c.target_y = fp.y;
-
-        var rr = get_register_by_lane(chosen_lane);
-        if (instance_exists(rr)) rr.slot_taken = true;
-    } else {
-        // 沒空位：加到中央佇列尾端
-        array_push(queue, c);
-        refresh_queue_targets();
-    }
+function _reg_center_x(inst) {
+    var spr = inst.sprite_index;
+    var cx  = inst.x - sprite_get_xoffset(spr) + sprite_get_width(spr) * 0.5;
+    return cx;
 }
 
 //////////////////////////
@@ -137,13 +125,14 @@ regs[1].lane_id = 1; regs[1].busy = false; regs[1].slot_taken = false;
 
 // 服務點在收銀機【上方】50px（收銀機在下方）
 front_pos = [
-    { x: regs[0].x, y: regs[0].y - 50 },
-    { x: regs[1].x, y: regs[1].y - 50 }
+    { x: _reg_center_x(regs[0]), y: regs[0].y - 50 },
+    { x: _reg_center_x(regs[1]), y: regs[1].y - 50 }
 ];
 
+
 // 單列隊首錨點在兩個服務點的中間再往上 20px
-center_x = (regs[0].x + regs[1].x) * 0.5;
-center_y = min(front_pos[0].y, front_pos[1].y) - 20;
+center_x = room_width * 0.5;   // 640
+center_y = room_height * 0.5;  // 360
 
 // 單一中央隊列與間距（倒Y：由下往上排）
 queue = [];
@@ -156,4 +145,6 @@ door_y = -32;
 // 生成節奏：每4秒進1人，最多20人
 max_customers  = 20;
 spawned_count  = 0;
+next_lane = 0; // 0=左、1=右（兩邊都空時，交替指派）
+
 alarm[0] = room_speed * 4; // 啟動週期生成

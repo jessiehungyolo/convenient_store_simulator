@@ -27,6 +27,9 @@ alarm[1] = stain_interval;
 
 // 污漬上限，避免太多
 max_stains = 6;
+next_stain_side = 0; // 0=左, 1=右
+
 
 // 生成層（請確保房間有這個 Instance Layer）
 layer_instances = "Instances";
+

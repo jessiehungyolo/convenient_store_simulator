@@ -13,50 +13,34 @@ if (dist > arrival_radius) {
     }
 }
 
-// 在服務點時可接收咖啡
-if (state == "at_register" && !has_coffee) {
-    var cntp = instance_number(o_player);
-    for (var i = 0; i < cntp; i++) {
-        var p = instance_find(o_player, i);
-        if (p.carry_coffee && point_distance(x, y, p.x, p.y) <= 24) {
-            p.carry_coffee = false;
-            has_coffee = true;
-            needs_coffee = false;
-
-            // 開始結帳：鎖定 busy 2 秒
-            var reg = get_assigned_register();
-            if (instance_exists(reg)) {
-                reg.busy = true;
-                checkout_timer = room_speed * 2;
-                state = "checkout";
-            }
-            break;
-        }
-    }
-}
 
 // 結帳倒數
 if (state == "checkout") {
     checkout_timer--;
     if (checkout_timer <= 0) {
-        // 解鎖收銀機（釋放 slot_taken & busy）
-        var reg2 = get_assigned_register();
-        if (instance_exists(reg2)) {
-            reg2.busy = false;
-            reg2.slot_taken = false;
+        // 解鎖收銀機
+        var reg = noone;
+        var cr = instance_number(o_register);
+        for (var r = 0; r < cr; r++) {
+            var rr = instance_find(o_register, r);
+            if (rr.lane_id == assigned_lane) { reg = rr; break; }
+        }
+        if (instance_exists(reg)) {
+            reg.busy = false;
+            reg.slot_taken = false;
+            reg.current_cust = noone;
         }
 
-        // 通知 manager：隊伍前進（彈出頭部）
-        with (o_customer_manager) {
-            pop_head_and_refresh();
-        }
+        // 通知 manager 隊伍前進
+        with (o_customer_manager) { pop_head_and_refresh(); }
 
         // 離場
-        state    = "leaving";
+        state = "leaving";
         target_x = door_x;
         target_y = door_y;
     }
 }
+
 
 // 走出畫面就刪除
 if (state == "leaving" && y > room_height + 16) {
