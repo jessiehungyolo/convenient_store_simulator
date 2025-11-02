@@ -32,7 +32,7 @@ if (state == "checkout") {
         }
 
         // 通知 manager 隊伍前進
-        with (o_customer_manager) { pop_head_and_refresh(); }
+        //with (o_customer_manager) { pop_head_and_refresh(); }
 
         // 離場
         state = "leaving";

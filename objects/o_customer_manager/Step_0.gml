@@ -1,11 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-// o_customer_manager.Step
-// 每幀嘗試把隊首派到空檔收銀機，並刷新佇列站位
-////////////////////////////////////////////////////////////////////////////////
 if (!active) exit;
 
-// 嘗試派發隊首
-try_dispatch_head_to_free_register();
+if (dispatch_cooldown > 0) {
+    dispatch_cooldown--;
+} else {
+    var assigned = auto_dispatch_free_registers();
+    if (assigned > 0) dispatch_cooldown = 1;
+}
 
-// （保險）刷新一次隊列站位：若隊首已外派，不會動到它
 refresh_queue_targets();
